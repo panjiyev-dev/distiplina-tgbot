@@ -11,7 +11,7 @@ const cron = require('node-cron');
 // ==============================
 // 🔥 CONFIG — O'ZGARTIRING
 // ==============================
-const BOT_TOKEN = '8675536920:AAHW2ZVgBVYf8CWJQtlLg4zv1ySJxVgAuZU'; // @BotFather dan oling
+const BOT_TOKEN = process.env.BOT_TOKEN; // @BotFather dan oling
 const serviceAccount = require('./serviceAccountKey.json'); // Firebase Console > Project Settings > Service Accounts
 
 admin.initializeApp({
@@ -34,7 +34,7 @@ bot.onText(/\/start/, async (msg) => {
     `Bu bot sizga o'rganilgan mavzularni takrorlashni eslatib turadi.\n\n` +
     `📋 *Qanday ulash:*\n` +
     `1. Sizning Chat ID: \`${chatId}\`\n` +
-    `2. Saytga kiring: studytrack.web.app\n` +
+    `2. Saytga kiring: https://panjiyevdev-ditiplin.netlify.app\n` +
     `3. Telegram Bot sahifasida shu ID ni kiriting\n\n` +
     `✅ Tayyor! Eslatmalar avtomatik boshlanadi.`,
     { parse_mode: 'Markdown' }
