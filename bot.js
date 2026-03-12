@@ -12,7 +12,8 @@ const cron = require('node-cron');
 // 🔥 CONFIG — O'ZGARTIRING
 // ==============================
 const BOT_TOKEN = process.env.BOT_TOKEN; // @BotFather dan oling
-const serviceAccount = require('./serviceAccountKey.json'); // Firebase Console > Project Settings > Service Accounts
+// Firebase Console > Project Settings > Service Accounts
+const serviceAccount = JSON.parse(process.env.GOOGLE_CREDENTIALS);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
