@@ -10,8 +10,8 @@ const CHANNEL_USERNAME = 'panjiyevdev';
 const SITE_URL = 'https://study-track.uz';
 const HTTP_PORT = process.env.PORT || 3000;
 
-const serviceAccount = process.env.GOOGLE_CREDENTIALS
-    ? JSON.parse(process.env.GOOGLE_CREDENTIALS)
+const serviceAccount = process.env.GOOGLE_CREDENTIALS 
+    ? JSON.parse(process.env.GOOGLE_CREDENTIALS) 
     : require('./serviceAccount.json');
 admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
 const db = admin.firestore();
@@ -74,17 +74,14 @@ app.post('/sendOtp', async (req, res) => {
         });
 
         await bot.sendMessage(chatId,
-            `🔐 *StudyTrack — Tasdiqlash kodi*
-            
-            Sizning kodingiz:
-            
-            \`\`\`
-            ${code}
-            \`\`\`
-            
-            ⏱ Kod 5 daqiqa ichida amal qiladi.
-            🚫 Kodni hech kimga bermang!`,
-            { parse_mode: "Markdown" }
+            `🔐 *StudyTrack — Tasdiqlash kodi*\n\n` +
+            `Sizning kodingiz:\n\n` +
+            `┌─────────────┐\n` +
+            `│   *${code}*   │\n` +
+            `└─────────────┘\n\n` +
+            `⏱ Kod 5 daqiqa ichida amal qiladi.\n` +
+            `🚫 Kodni hech kimga bermang!`,
+            { parse_mode: 'Markdown' }
         );
 
         console.log(`OTP sent to chatId ${chatId} for phone ${normalPhone}`);
@@ -198,11 +195,11 @@ function normalizePhone(raw) {
     if (p.startsWith('0')) return '+998' + p.slice(1);
     return '+' + p;
 }
-function isValidPhone(p) { return /^\+998[0-9]{9}$/.test(p); }
+function isValidPhone(p) { return /^\+[0-9]{7,15}$/.test(p); }
 
 function getTodayStr() {
     const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 function getDatePlusDays(dateStr, days) {
     const d = new Date(dateStr); d.setDate(d.getDate() + days); return d.toISOString().split('T')[0];
@@ -372,7 +369,7 @@ bot.on('callback_query', async (callbackQuery) => {
         const subscribed = await isSubscribed(userId);
         if (subscribed) {
             await bot.answerCallbackQuery(callbackQuery.id, { text: '✅ Raxmat!', show_alert: false });
-            await bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: chatId, message_id: msg.message_id }).catch(() => { });
+            await bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: chatId, message_id: msg.message_id }).catch(() => {});
             const firstName = callbackQuery.from.first_name || 'Dostim';
             setState(chatId, { step: 'waiting_phone', firstName });
             await bot.sendMessage(chatId, `✅ Obuna tasdiqlandi!\n\n📱 Telefon raqamingizni yuboring:`, {
@@ -466,7 +463,7 @@ async function sendReminders(currentHour) {
             ).join('\n\n');
 
             await bot.sendMessage(chatId,
-                `🔔 *TAKRORLASH ESLATMASI* (${sentHours.length + 1}-marta)\n\n📅 ${data.date}\n\n${subjectText}\n\n❓ Bularni eslaysizmi?`,
+                `🔔 *TAKRORLASH ESLATMASI* (${sentHours.length+1}-marta)\n\n📅 ${data.date}\n\n${subjectText}\n\n❓ Bularni eslaysizmi?`,
                 {
                     parse_mode: 'Markdown',
                     reply_markup: { inline_keyboard: [[{ text: '✅ Ha, eslayapman!', callback_data: `confirm_${docSnap.id}` }]] }
@@ -494,7 +491,7 @@ async function markUnconfirmed(todayStr) {
         await bot.sendMessage(chatId,
             `😔 *${data.date}* sanasidagi mavzular tasdiqlanmadi.\n\n💪 Ertaga takrorlab koring!`,
             { parse_mode: 'Markdown' }
-        ).catch(() => { });
+        ).catch(() => {});
     }
 }
 
