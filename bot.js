@@ -44,7 +44,7 @@ app.post('/sendOtp', async (req, res) => {
         if (tgSnap.empty) {
             return res.status(404).json({
                 error: 'no-chat-id',
-                message: 'Bu raqam Telegram bot bilan boglanmagan. @panjiyevdevbot ga /start bosing'
+                message: 'Bu raqam Telegram bot bilan boglanmagan. @StudyTrackuzbot ga /start bosing'
             });
         }
 
@@ -111,7 +111,7 @@ app.post('/verifyOtp', async (req, res) => {
         const expiresAt = codeData.expiresAt?.toDate();
         if (!expiresAt || Date.now() > expiresAt.getTime()) {
             await codeDoc.ref.delete();
-            return res.status(400).json({ error: 'code-expired', message: 'Kod muddati otdi. Yangi kod oling' });
+            return res.status(400).json({ error: 'code-expired', message: "Kod muddati o'tdi. Yangi kod oling" });
         }
 
         // Urinish soni
@@ -124,7 +124,7 @@ app.post('/verifyOtp', async (req, res) => {
         if (codeData.code !== code) {
             await codeDoc.ref.update({ attempts: admin.firestore.FieldValue.increment(1) });
             const left = 5 - (codeData.attempts + 1);
-            return res.status(400).json({ error: 'invalid-code', message: `Notogri kod. ${left} ta urinish qoldi` });
+            return res.status(400).json({ error: 'invalid-code', message: `Noto'g'ri kod. ${left} ta urinish qoldi` });
         }
 
         // User yaratish yoki topish
