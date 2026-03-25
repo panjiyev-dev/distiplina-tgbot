@@ -10,6 +10,15 @@ const CHANNEL_USERNAME = 'panjiyevdev';
 const SITE_URL = 'https://study-track.uz';
 const HTTP_PORT = process.env.PORT || 3000;
 
+// ⏰ VAQT ZONASI UTILS
+const TZ_OFFSET = 5 * 60 * 60 * 1000; // UTC+5 (Tashkent)
+function getTashkentTime() {
+    return new Date(Date.now() + TZ_OFFSET);
+}
+function getTashkentHour() {
+    return getTashkentTime().getHours();
+}
+
 const serviceAccount = process.env.GOOGLE_CREDENTIALS 
     ? JSON.parse(process.env.GOOGLE_CREDENTIALS) 
     : require('./serviceAccount.json');
@@ -198,7 +207,7 @@ function normalizePhone(raw) {
 function isValidPhone(p) { return /^\+[0-9]{7,15}$/.test(p); }
 
 function getTodayStr() {
-    const d = new Date();
+    const d = getTashkentTime();
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 function getDatePlusDays(dateStr, days) {
@@ -434,17 +443,23 @@ async function handleConfirm(chatId, entryId, msg, callbackQueryId) {
 }
 
 // ==============================
-// CRON
+// 🔧 CRON - TASHKENT VAQTI BILAN (UTC+5)
 // ==============================
-cron.schedule('0 7-21 * * *', async () => {
-    const hour = new Date().getHours();
-    await sendReminders(hour);
+cron.schedule('0 2-16 * * *', async () => {
+    // UTC da 2-16 soat = Tashkent da 7-21 soat
+    const tashkentHour = getTashkentHour();
+    const allowedHours = [7, 10, 13, 16, 19, 21];
+    
+    console.log(`⏰ Cron ishga tushdi. Tashkent soati: ${tashkentHour}:00`);
+    
+    if (allowedHours.includes(tashkentHour)) {
+        await sendReminders(tashkentHour);
+    }
 });
 
 async function sendReminders(currentHour) {
     const todayStr = getTodayStr();
-    const allowedHours = [7, 10, 13, 16, 19, 21];
-    if (!allowedHours.includes(currentHour)) return;
+    console.log(`📤 ${currentHour}:00 da eslatmalar yuborilmoqda...`);
 
     try {
         const snap = await db.collection('entries').where('reminderDate', '==', todayStr).get();
@@ -495,5 +510,6 @@ async function markUnconfirmed(todayStr) {
     }
 }
 
-console.log('🤖 StudyTrack Bot v3.0 ishga tushdi!');
+console.log('🤖 StudyTrack Bot v3.1 ishga tushdi!');
 console.log('📢 Majburiy obuna: @' + CHANNEL_USERNAME);
+console.log('⏰ Vaqt zonasi: UTC+5 (Tashkent)');
