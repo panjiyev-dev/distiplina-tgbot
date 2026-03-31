@@ -463,34 +463,63 @@ async function sendReminders(currentHour) {
 
     try {
         const snap = await db.collection('entries').where('reminderDate', '==', todayStr).get();
+        
         for (const docSnap of snap.docs) {
             const data = docSnap.data();
             if (data.confirmations?.[todayStr]) continue;
+
             const userSnap = await db.collection('users').doc(data.uid).get();
             if (!userSnap.exists) continue;
+            
             const chatId = userSnap.data().tgChatId;
             if (!chatId) continue;
+
             const sentHours = data.sentHours || [];
             if (sentHours.includes(currentHour)) continue;
 
-            const subjectText = (data.subjects || []).map(s =>
-                `📚 *${s.subject}*${s.notes ? '\n   ' + s.notes.substring(0, 100) : ''}`
-            ).join('\n\n');
+            // 1. Umumiy sarlavha yuboramiz
+            await bot.sendMessage(chatId, `🔔 *TAKRORLASH ESLATMASI* (${sentHours.length + 1}-marta)\n📅 Sana: ${data.date}`, { parse_mode: 'Markdown' });
 
-            await bot.sendMessage(chatId,
-                `🔔 *TAKRORLASH ESLATMASI* (${sentHours.length+1}-marta)\n\n📅 ${data.date}\n\n${subjectText}\n\n❓ Bularni eslaysizmi?`,
-                {
-                    parse_mode: 'Markdown',
-                    reply_markup: { inline_keyboard: [[{ text: '✅ Ha, eslayapman!', callback_data: `confirm_${docSnap.id}` }]] }
+            const subjects = data.subjects || [];
+            
+            // 2. Har bir fan/mavzuni alohida xabar qilib chiqamiz
+            for (let i = 0; i < subjects.length; i++) {
+                const s = subjects[i];
+                const text = `📚 *${s.subject}*\n\n${s.notes || ''}`;
+                
+                // Agar bu oxirgi fan bo'lsa, tugmani qo'shamiz
+                const isLast = i === subjects.length - 1;
+                const options = { parse_mode: 'Markdown' };
+
+                if (isLast) {
+                    options.reply_markup = {
+                        inline_keyboard: [[{ text: '✅ Ha, barchasini esladim!', callback_data: `confirm_${docSnap.id}` }]]
+                    };
                 }
-            );
+
+                // Telegram limitidan oshib ketmaslik uchun matnni bo'laklash (har ehtimolga qarshi)
+                if (text.length > 4000) {
+                    const chunks = text.match(/[\s\S]{1,4000}/g) || [];
+                    for (let j = 0; j < chunks.length; j++) {
+                        const lastChunk = j === chunks.length - 1;
+                        await bot.sendMessage(chatId, chunks[j], (isLast && lastChunk) ? options : { parse_mode: 'Markdown' });
+                    }
+                } else {
+                    await bot.sendMessage(chatId, text, options);
+                }
+            }
+
+            // 3. Bazada yuborildi deb belgilaymiz
             await docSnap.ref.update({
                 sentHours: admin.firestore.FieldValue.arrayUnion(currentHour),
                 lastSentAt: new Date().toISOString()
             });
         }
+
         if (currentHour === 21) await markUnconfirmed(todayStr);
-    } catch (e) { console.error('Cron error:', e); }
+    } catch (e) { 
+        console.error('Cron error:', e); 
+    }
 }
 
 async function markUnconfirmed(todayStr) {
